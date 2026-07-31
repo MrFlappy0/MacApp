@@ -4,35 +4,49 @@
 <dict>
     <key>CFBundleDevelopmentRegion</key>
     <string>en</string>
+    
     <key>CFBundleDisplayName</key>
-    <string>MLX Mac App</string>
+    <string>MLX for All</string>
+    
     <key>CFBundleExecutable</key>
-    <string>MLXMacApp</string>
+    <string>MLXForAll</string>
+    
     <key>CFBundleIdentifier</key>
-    <string>com.mrflappy0.MLXMacApp</string>
+    <string>com.mrflappy0.MLXForAll</string>
+    
     <key>CFBundleInfoDictionaryVersion</key>
     <string>6.0</string>
+    
     <key>CFBundleName</key>
-    <string>MLX Mac App</string>
+    <string>MLX for All</string>
+    
     <key>CFBundlePackageType</key>
     <string>APPL</string>
+    
     <key>CFBundleShortVersionString</key>
-    <string>1.0.0</string>
+    <string>2.0.0</string>
+    
     <key>CFBundleVersion</key>
-    <string>1</string>
+    <string>2026.1</string>
+    
     <key>LSMinimumSystemVersion</key>
     <string>14.0</string>
+    
     <key>NSAppTransportSecurity</key>
     <dict>
         <key>NSAllowsArbitraryLoads</key>
         <true/>
     </dict>
+    
     <key>NSHumanReadableCopyright</key>
-    <string>Copyright © 2024 MrFlappy0. All rights reserved.</string>
+    <string>Copyright © 2026 MrFlappy0. All rights reserved.</string>
+    
     <key>NSMainStoryboardFile</key>
     <string>Main</string>
+    
     <key>NSPrincipalClass</key>
     <string>NSApplication</string>
+    
     <key>UIApplicationSceneManifest</key>
     <dict>
         <key>UIApplicationSupportsMultipleScenes</key>
@@ -50,9 +64,43 @@
             </array>
         </dict>
     </dict>
+    
     <key>UTExportedTypeDeclarations</key>
     <array/>
+    
     <key>UTImportedTypeDeclarations</key>
+    <array/>
+    
+    <!-- Permissions -->
+    <key>NSAppleEventsUsageDescription</key>
+    <string>MLX for All needs to send Apple events to control other applications for automation features.</string>
+    
+    <key>NSMicrophoneUsageDescription</key>
+    <string>MLX for All needs microphone access to record audio for speech-to-text features.</string>
+    
+    <key>NSCameraUsageDescription</key>
+    <string>MLX for All needs camera access to capture images for vision models.</string>
+    
+    <key>NSPhotoLibraryUsageDescription</key>
+    <string>MLX for All needs photo library access to select images for analysis.</string>
+    
+    <key>NSDocumentsFolderUsageDescription</key>
+    <string>MLX for All needs access to your documents to read and write files.</string>
+    
+    <key>NSDownloadsFolderUsageDescription</key>
+    <string>MLX for All needs access to your downloads folder to save files.</string>
+    
+    <key>NSDesktopFolderUsageDescription</key>
+    <string>MLX for All needs access to your desktop to save and open files.</string>
+    
+    <!-- Capabilities -->
+    <key>NSHighResolutionCapable</key>
+    <true/>
+    
+    <key>NSRequiresAquaSystemAppearance</key>
+    <false/>
+    
+    <key>NSUserActivityTypes</key>
     <array/>
 </dict>
 </plist>

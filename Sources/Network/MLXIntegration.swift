@@ -1,8 +1,7 @@
 import Foundation
 import Metal
-import MetalPerformanceShaders
 
-/// Gestionnaire d'intégration avec MLX
+/// Gestionnaire d'intégration avec MLX 2.0
 class MLXIntegration {
     static let shared = MLXIntegration()
     
@@ -30,25 +29,29 @@ class MLXIntegration {
     // MARK: - Model Loading
     
     /// Charge un modèle depuis un chemin local
-    func loadModel(from path: String, config: ModelConfig? = nil) async throws -> MLXModelWrapper {
+    func loadModel(from path: String, completion: @escaping (Result<Void, Error>) -> Void) {
         let modelId = UUID().uuidString
         
         // Vérifier la mémoire disponible
-        try memoryManager.checkMemoryAvailable()
+        do {
+            try memoryManager.checkMemoryAvailable()
+        } catch {
+            completion(.failure(error))
+            return
+        }
         
         // Charger le modèle (simulation pour l'instant)
         let model = MLXModelWrapper(
             id: modelId,
             path: path,
             device: device,
-            commandQueue: commandQueue,
-            config: config ?? ModelConfig.defaultChatConfig()
+            commandQueue: commandQueue
         )
         
         loadedModels[modelId] = model
         memoryManager.registerModel(model)
         
-        return model
+        completion(.success(()))
     }
     
     /// Décharge un modèle
@@ -80,26 +83,31 @@ class MLXIntegration {
     func generateText(
         modelId: String,
         prompt: String,
-        config: ModelConfig? = nil
-    ) async throws -> String {
+        config: ModelConfig,
+        completion: @escaping (Result<String, Error>) -> Void
+    ) {
         guard let model = loadedModels[modelId] else {
-            throw MLXError.modelNotLoaded
+            completion(.failure(MLXError.modelNotLoaded))
+            return
         }
         
-        return try await model.generateText(prompt: prompt, config: config)
+        model.generateText(prompt: prompt, config: config, completion: completion)
     }
     
     /// Exécute une inférence en streaming
     func generateTextStream(
         modelId: String,
         prompt: String,
-        config: ModelConfig? = nil
-    ) async throws -> AsyncStream<String> {
+        config: ModelConfig,
+        onToken: @escaping (String) -> Void,
+        completion: @escaping (Result<Void, Error>) -> Void
+    ) {
         guard let model = loadedModels[modelId] else {
-            throw MLXError.modelNotLoaded
+            completion(.failure(MLXError.modelNotLoaded))
+            return
         }
         
-        return try await model.generateTextStream(prompt: prompt, config: config)
+        model.generateTextStream(prompt: prompt, config: config, onToken: onToken, completion: completion)
     }
     
     // MARK: - Memory Management
@@ -123,19 +131,17 @@ class MLXModelWrapper {
     let path: String
     let device: MTLDevice?
     let commandQueue: MTLCommandQueue?
-    var config: ModelConfig
     
     private var isLoaded: Bool = true
     private var memoryUsage: Int64 = 0
     
-    init(id: String, path: String, device: MTLDevice?, commandQueue: MTLCommandQueue?, config: ModelConfig) {
+    init(id: String, path: String, device: MTLDevice?, commandQueue: MTLCommandQueue?) {
         self.id = id
         self.path = path
         self.device = device
         self.commandQueue = commandQueue
-        self.config = config
         
-        // Estimer l'utilisation mémoire (simulation)
+        // Estimer l'utilisation mémoire
         self.memoryUsage = estimateMemoryUsage()
     }
     
@@ -146,42 +152,43 @@ class MLXModelWrapper {
     }
     
     /// Génère du texte
-    func generateText(prompt: String, config: ModelConfig? = nil) async throws -> String {
-        // Utiliser la configuration fournie ou celle par défaut
-        let inferenceConfig = config ?? self.config
-        
+    func generateText(prompt: String, config: ModelConfig, completion: @escaping (Result<String, Error>) -> Void) {
         // Simulation de l'inférence
-        // En réalité, cela appellerait le modèle MLX
-        try await Task.sleep(nanoseconds: 1_000_000_000) // 1 seconde
-        
-        // Générer une réponse simulée
-        let responses = [
-            "Voici une réponse générée par le modèle \(inferenceConfig.description) avec température \(inferenceConfig.temperature).",
-            "Je comprends votre question. Voici une réponse détaillée et utile.",
-            "D'après mon analyse, voici ce que je peux vous dire...",
-            "Intéressante question ! Voici ma réponse basée sur les informations disponibles."
-        ]
-        
-        return responses.randomElement() ?? "Réponse du modèle."
+        DispatchQueue.global(qos: .userInitiated).async {
+            Thread.sleep(forTimeInterval: 1.0)
+            
+            // Générer une réponse simulée
+            let responses = [
+                "Voici une réponse générée avec température \(config.temperature).",
+                "Je comprends votre question. Voici une réponse détaillée et utile.",
+                "D'après mon analyse, voici ce que je peux vous dire...",
+                "Intéressante question ! Voici ma réponse basée sur les informations disponibles."
+            ]
+            
+            let response = responses.randomElement() ?? "Réponse du modèle."
+            
+            DispatchQueue.main.async {
+                completion(.success(response))
+            }
+        }
     }
     
     /// Génère du texte en streaming
-    func generateTextStream(prompt: String, config: ModelConfig? = nil) async throws -> AsyncStream<String> {
-        let inferenceConfig = config ?? self.config
-        
-        // Créer un stream asynchrone
-        return AsyncStream { continuation in
-            Task {
-                // Simulation de streaming
-                let response = "Voici une réponse en streaming générée par le modèle avec température \(inferenceConfig.temperature)."
-                let tokens = response.map { String($0) }
-                
-                for token in tokens {
-                    try await Task.sleep(nanoseconds: 50_000_000) // 50ms
-                    continuation.yield(token)
+    func generateTextStream(prompt: String, config: ModelConfig, onToken: @escaping (String) -> Void, completion: @escaping (Result<Void, Error>) -> Void) {
+        // Simulation de streaming
+        DispatchQueue.global(qos: .userInitiated).async {
+            let response = "Voici une réponse en streaming générée avec température \(config.temperature)."
+            let tokens = response.map { String($0) }
+            
+            for token in tokens {
+                Thread.sleep(forTimeInterval: 0.05)
+                DispatchQueue.main.async {
+                    onToken(token)
                 }
-                
-                continuation.finish()
+            }
+            
+            DispatchQueue.main.async {
+                completion(.success(()))
             }
         }
     }
@@ -260,7 +267,6 @@ class MLXMemoryManager {
     
     func cleanupUnusedModels() {
         // Nettoyer les modèles non utilisés depuis longtemps
-        // Implémentation à compléter
     }
     
     private func updatePeakMemory() {
@@ -372,90 +378,5 @@ enum MLXError: Error {
         case .inferenceFailed: return "Échec de l'inférence"
         case .invalidInput: return "Entrée invalide"
         }
-    }
-}
-
-/// Configuration pour l'inférence avec optimisation
-struct MLXInferenceConfig {
-    var device: MLXDevice = .auto
-    var precision: MLXPrecision = .float16
-    var batchSize: Int = 1
-    var maxTokens: Int = 2048
-    var temperature: Double = 0.7
-    var topP: Double = 0.9
-    var topK: Int = 50
-    
-    enum MLXDevice: String {
-        case auto = "Auto"
-        case cpu = "CPU"
-        case gpu = "GPU"
-        case mps = "MPS"
-    }
-    
-    enum MLXPrecision: String {
-        case float32 = "Float32"
-        case float16 = "Float16"
-        case int8 = "Int8"
-    }
-    
-    static func `default`() -> MLXInferenceConfig {
-        MLXInferenceConfig()
-    }
-    
-    static func optimizedForSpeed() -> MLXInferenceConfig {
-        var config = MLXInferenceConfig()
-        config.device = .mps
-        config.precision = .float16
-        config.batchSize = 1
-        config.temperature = 0.7
-        return config
-    }
-    
-    static func optimizedForMemory() -> MLXInferenceConfig {
-        var config = MLXInferenceConfig()
-        config.device = .cpu
-        config.precision = .int8
-        config.batchSize = 1
-        config.maxTokens = 1024
-        return config
-    }
-    
-    static func optimizedForQuality() -> MLXInferenceConfig {
-        var config = MLXInferenceConfig()
-        config.device = .mps
-        config.precision = .float32
-        config.batchSize = 1
-        config.temperature = 0.3
-        return config
-    }
-}
-
-/// Extension pour convertir ModelConfig en MLXInferenceConfig
-extension ModelConfig {
-    func toMLXInferenceConfig() -> MLXInferenceConfig {
-        var config = MLXInferenceConfig()
-        
-        // Mapper la précision
-        switch precision {
-        case .float32: config.precision = .float32
-        case .float16: config.precision = .float16
-        case .int8: config.precision = .int8
-        }
-        
-        // Mapper le périphérique
-        switch AppState.shared.settings.device {
-        case .auto: config.device = .auto
-        case .cpu: config.device = .cpu
-        case .gpu: config.device = .gpu
-        case .mps: config.device = .mps
-        }
-        
-        config.batchSize = AppState.shared.settings.batchSize
-        config.maxTokens = maxTokens
-        config.temperature = temperature
-        config.topP = topP
-        config.topK = topK
-        
-        return config
     }
 }

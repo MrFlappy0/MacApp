@@ -1,111 +1,221 @@
 import Foundation
-import SwiftUI
 
-/// Protocole pour les outils MCP
-protocol MCPToolProtocol {
-    var name: String { get }
-    var description: String { get }
-    var parameters: [MCPParameter] { get }
-    
-    func execute(arguments: [String: Any], completion: @escaping (Result<MCPToolResult, Error>) -> Void)
-}
-
-/// Paramètre d'un outil MCP
-struct MCPParameter: Codable {
-    let name: String
-    let type: String
-    let description: String
-    let required: Bool
-    let defaultValue: Any?
-}
-
-/// Résultat d'un outil MCP
-struct MCPToolResult: Codable {
-    let content: String
-    let success: Bool
-    let error: String?
-    let metadata: [String: AnyCodable]?
-}
-
-/// Client MCP pour gérer les outils
+/// Client MCP pour gérer les outils et serveurs
 class MCPClient {
     static let shared = MCPClient()
     
-    private var tools: [String: MCPToolProtocol] = [:]
-    private var connectedServers: [MCPServer] = []
+    private var tools: [MCPTool] = []
+    private var servers: [MCPServerConfig] = []
     
-    init() {
+    private init() {
         registerBuiltInTools()
     }
     
     // MARK: - Tool Management
     
-    func registerTool(_ tool: MCPToolProtocol) {
-        tools[tool.name] = tool
+    func registerTool(_ tool: MCPTool) {
+        tools.append(tool)
     }
     
     func unregisterTool(_ name: String) {
-        tools.removeValue(forKey: name)
+        tools.removeAll { $0.name == name }
     }
     
-    func getTool(_ name: String) -> MCPToolProtocol? {
-        tools[name]
+    func getTool(_ name: String) -> MCPTool? {
+        tools.first { $0.name == name }
     }
     
-    func listTools() -> [MCPToolProtocol] {
-        Array(tools.values)
+    func listTools() -> [MCPTool] {
+        tools
     }
     
-    func executeTool(_ name: String, arguments: [String: Any], completion: @escaping (Result<MCPToolResult, Error>) -> Void) {
-        guard let tool = tools[name] else {
+    func executeTool(_ name: String, arguments: [String: String], completion: @escaping (Result<MCPToolResult, Error>) -> Void) {
+        guard let tool = tools.first(where: { $0.name == name }) else {
             completion(.failure(MCPError.toolNotFound))
             return
         }
         
-        tool.execute(arguments: arguments, completion: completion)
+        // Simuler l'exécution de l'outil
+        DispatchQueue.global(qos: .userInitiated).async {
+            Thread.sleep(forTimeInterval: 0.5)
+            
+            let result = MCPToolResult(
+                content: "Résultat de l'outil \(name): [Contenu simulé]",
+                success: true,
+                error: nil
+            )
+            
+            DispatchQueue.main.async {
+                completion(.success(result))
+            }
+        }
     }
     
     // MARK: - Server Management
     
-    func connectServer(_ server: MCPServer) {
-        connectedServers.append(server)
-        server.connect()
+    func addServer(_ server: MCPServerConfig) {
+        servers.append(server)
     }
     
-    func disconnectServer(_ server: MCPServer) {
-        if let index = connectedServers.firstIndex(where: { $0.id == server.id }) {
-            connectedServers[index].disconnect()
-            connectedServers.remove(at: index)
-        }
+    func removeServer(_ server: MCPServerConfig) {
+        servers.removeAll { $0.id == server.id }
     }
     
-    func listServers() -> [MCPServer] {
-        connectedServers
+    func listServers() -> [MCPServerConfig] {
+        servers
     }
     
     // MARK: - Built-in Tools
     
     private func registerBuiltInTools() {
-        // Outils de recherche web
-        registerTool(WebSearchTool())
-        registerTool(WebFetchTool())
+        // Outils web
+        registerTool(MCPTool(
+            name: "web_search",
+            description: "Effectue une recherche sur le web",
+            category: "web",
+            parameters: [
+                MCPTool.MCPParameter(name: "query", type: "string", description: "Requête de recherche", required: true, defaultValue: nil),
+                MCPTool.MCPParameter(name: "max_results", type: "integer", description: "Nombre maximum de résultats", required: false, defaultValue: "5")
+            ]
+        ))
+        
+        registerTool(MCPTool(
+            name: "web_fetch",
+            description: "Récupère le contenu d'une URL",
+            category: "web",
+            parameters: [
+                MCPTool.MCPParameter(name: "url", type: "string", description: "URL à récupérer", required: true, defaultValue: nil)
+            ]
+        ))
         
         // Outils de fichiers
-        registerTool(FileReadTool())
-        registerTool(FileWriteTool())
-        registerTool(FileListTool())
-        registerTool(FileDeleteTool())
+        registerTool(MCPTool(
+            name: "file_read",
+            description: "Lit le contenu d'un fichier",
+            category: "file",
+            parameters: [
+                MCPTool.MCPParameter(name: "path", type: "string", description: "Chemin du fichier", required: true, defaultValue: nil)
+            ]
+        ))
+        
+        registerTool(MCPTool(
+            name: "file_write",
+            description: "Écrit du contenu dans un fichier",
+            category: "file",
+            parameters: [
+                MCPTool.MCPParameter(name: "path", type: "string", description: "Chemin du fichier", required: true, defaultValue: nil),
+                MCPTool.MCPParameter(name: "content", type: "string", description: "Contenu à écrire", required: true, defaultValue: nil)
+            ]
+        ))
+        
+        registerTool(MCPTool(
+            name: "file_list",
+            description: "Liste les fichiers dans un répertoire",
+            category: "file",
+            parameters: [
+                MCPTool.MCPParameter(name: "path", type: "string", description: "Chemin du répertoire", required: true, defaultValue: nil)
+            ]
+        ))
         
         // Outils système
-        registerTool(DateTimeTool())
-        registerTool(CalculatorTool())
+        registerTool(MCPTool(
+            name: "datetime",
+            description: "Récupère la date et l'heure actuelles",
+            category: "system",
+            parameters: [
+                MCPTool.MCPParameter(name: "format", type: "string", description: "Format de date", required: false, defaultValue: "yyyy-MM-dd HH:mm:ss")
+            ]
+        ))
         
-        // Outils de calcul
-        registerTool(CodeExecutionTool())
+        registerTool(MCPTool(
+            name: "calculator",
+            description: "Effectue des calculs mathématiques",
+            category: "calculator",
+            parameters: [
+                MCPTool.MCPParameter(name: "expression", type: "string", description: "Expression mathématique", required: true, defaultValue: nil)
+            ]
+        ))
+        
+        // Outils de code
+        registerTool(MCPTool(
+            name: "python_execute",
+            description: "Exécute du code Python",
+            category: "code",
+            parameters: [
+                MCPTool.MCPParameter(name: "code", type: "string", description: "Code Python", required: true, defaultValue: nil)
+            ]
+        ))
+        
+        registerTool(MCPTool(
+            name: "swift_execute",
+            description: "Exécute du code Swift",
+            category: "code",
+            parameters: [
+                MCPTool.MCPParameter(name: "code", type: "string", description: "Code Swift", required: true, defaultValue: nil)
+            ]
+        ))
     }
 }
 
-/// Erreurs MCP
+/// Registry pour tous les outils MCP
+class MCPToolRegistry {
+    static let shared = MCPToolRegistry()
+    
+    func listAllTools() -> [MCPTool] {
+        MCPClient.shared.listTools()
+    }
+}
+
+// MARK: - Modèles de données
+
+struct MCPTool: Identifiable, Codable {
+    let id: String
+    let name: String
+    let description: String
+    let category: String
+    let parameters: [MCPParameter]
+    
+    init(id: String = UUID().uuidString, name: String, description: String, category: String, parameters: [MCPParameter]) {
+        self.id = id
+        self.name = name
+        self.description = description
+        self.category = category
+        self.parameters = parameters
+    }
+    
+    struct MCPParameter: Codable {
+        let name: String
+        let type: String
+        let description: String
+        let required: Bool
+        let defaultValue: String?
+    }
+}
+
+struct MCPToolResult: Codable {
+    let content: String
+    let success: Bool
+    let error: String?
+}
+
+struct MCPServerConfig: Identifiable, Codable {
+    let id: UUID
+    var name: String
+    var url: String
+    var isConnected: Bool
+    var tools: [String]
+    
+    init(id: UUID = UUID(), name: String, url: String, isConnected: Bool = false, tools: [String] = []) {
+        self.id = id
+        self.name = name
+        self.url = url
+        self.isConnected = isConnected
+        self.tools = tools
+    }
+}
+
+// MARK: - Erreurs
+
 enum MCPError: Error {
     case toolNotFound
     case invalidArguments
@@ -121,374 +231,5 @@ enum MCPError: Error {
         case .serverNotFound: return "Serveur non trouvé"
         case .connectionFailed: return "Échec de la connexion"
         }
-    }
-}
-
-/// Serveur MCP
-class MCPServer: Identifiable {
-    let id: UUID
-    let name: String
-    let url: String
-    var isConnected: Bool = false
-    var tools: [MCPToolProtocol] = []
-    
-    init(id: UUID = UUID(), name: String, url: String) {
-        self.id = id
-        self.name = name
-        self.url = url
-    }
-    
-    func connect() {
-        // Connexion au serveur MCP
-        isConnected = true
-    }
-    
-    func disconnect() {
-        isConnected = false
-    }
-    
-    func listTools() -> [MCPToolProtocol] {
-        tools
-    }
-}
-
-// MARK: - Built-in Tools
-
-/// Outil de recherche web
-class WebSearchTool: MCPToolProtocol {
-    let name = "web_search"
-    let description = "Effectue une recherche sur le web"
-    let parameters: [MCPParameter] = [
-        MCPParameter(name: "query", type: "string", description: "Requête de recherche", required: true, defaultValue: nil),
-        MCPParameter(name: "max_results", type: "integer", description: "Nombre maximum de résultats", required: false, defaultValue: 5)
-    ]
-    
-    func execute(arguments: [String: Any], completion: @escaping (Result<MCPToolResult, Error>) -> Void) {
-        guard let query = arguments["query"] as? String else {
-            completion(.failure(MCPError.invalidArguments))
-            return
-        }
-        
-        let maxResults = arguments["max_results"] as? Int ?? 5
-        
-        // Simulation de recherche web
-        DispatchQueue.global(qos: .userInitiated).async {
-            Thread.sleep(forTimeInterval: 1.0)
-            
-            let results = (1...maxResults).map { index in
-                "Résultat \(index): Informations pertinentes sur '\(query)' depuis une source fiable."
-            }
-            
-            let content = results.joined(separator: "\n\n")
-            
-            DispatchQueue.main.async {
-                completion(.success(MCPToolResult(
-                    content: content,
-                    success: true,
-                    error: nil,
-                    metadata: nil
-                )))
-            }
-        }
-    }
-}
-
-/// Outil de récupération de page web
-class WebFetchTool: MCPToolProtocol {
-    let name = "web_fetch"
-    let description = "Récupère le contenu d'une URL"
-    let parameters: [MCPParameter] = [
-        MCPParameter(name: "url", type: "string", description: "URL à récupérer", required: true, defaultValue: nil)
-    ]
-    
-    func execute(arguments: [String: Any], completion: @escaping (Result<MCPToolResult, Error>) -> Void) {
-        guard let urlString = arguments["url"] as? String,
-              let url = URL(string: urlString) else {
-            completion(.failure(MCPError.invalidArguments))
-            return
-        }
-        
-        // Simulation de récupération web
-        DispatchQueue.global(qos: .userInitiated).async {
-            Thread.sleep(forTimeInterval: 1.5)
-            
-            let content = "Contenu récupéré depuis \(urlString). Voici le texte extrait de la page."
-            
-            DispatchQueue.main.async {
-                completion(.success(MCPToolResult(
-                    content: content,
-                    success: true,
-                    error: nil,
-                    metadata: ["url": AnyCodable(urlString)]
-                )))
-            }
-        }
-    }
-}
-
-/// Outil de lecture de fichier
-class FileReadTool: MCPToolProtocol {
-    let name = "file_read"
-    let description = "Lit le contenu d'un fichier"
-    let parameters: [MCPParameter] = [
-        MCPParameter(name: "path", type: "string", description: "Chemin du fichier", required: true, defaultValue: nil)
-    ]
-    
-    func execute(arguments: [String: Any], completion: @escaping (Result<MCPToolResult, Error>) -> Void) {
-        guard let path = arguments["path"] as? String else {
-            completion(.failure(MCPError.invalidArguments))
-            return
-        }
-        
-        let fileURL = URL(fileURLWithPath: path)
-        
-        do {
-            let content = try String(contentsOf: fileURL)
-            completion(.success(MCPToolResult(
-                content: content,
-                success: true,
-                error: nil,
-                metadata: ["path": AnyCodable(path)]
-            )))
-        } catch {
-            completion(.failure(error))
-        }
-    }
-}
-
-/// Outil d'écriture de fichier
-class FileWriteTool: MCPToolProtocol {
-    let name = "file_write"
-    let description = "Écrit du contenu dans un fichier"
-    let parameters: [MCPParameter] = [
-        MCPParameter(name: "path", type: "string", description: "Chemin du fichier", required: true, defaultValue: nil),
-        MCPParameter(name: "content", type: "string", description: "Contenu à écrire", required: true, defaultValue: nil),
-        MCPParameter(name: "append", type: "boolean", description: "Ajouter au fichier existant", required: false, defaultValue: false)
-    ]
-    
-    func execute(arguments: [String: Any], completion: @escaping (Result<MCPToolResult, Error>) -> Void) {
-        guard let path = arguments["path"] as? String,
-              let content = arguments["content"] as? String else {
-            completion(.failure(MCPError.invalidArguments))
-            return
-        }
-        
-        let append = arguments["append"] as? Bool ?? false
-        let fileURL = URL(fileURLWithPath: path)
-        
-        do {
-            if append, FileManager.default.fileExists(atPath: path) {
-                let existingContent = try String(contentsOf: fileURL)
-                try (existingContent + content).write(to: fileURL, atomically: true, encoding: .utf8)
-            } else {
-                try content.write(to: fileURL, atomically: true, encoding: .utf8)
-            }
-            
-            completion(.success(MCPToolResult(
-                content: "Fichier écrit avec succès: \(path)",
-                success: true,
-                error: nil,
-                metadata: ["path": AnyCodable(path)]
-            )))
-        } catch {
-            completion(.failure(error))
-        }
-    }
-}
-
-/// Outil de liste de fichiers
-class FileListTool: MCPToolProtocol {
-    let name = "file_list"
-    let description = "Liste les fichiers dans un répertoire"
-    let parameters: [MCPParameter] = [
-        MCPParameter(name: "path", type: "string", description: "Chemin du répertoire", required: true, defaultValue: nil)
-    ]
-    
-    func execute(arguments: [String: Any], completion: @escaping (Result<MCPToolResult, Error>) -> Void) {
-        guard let path = arguments["path"] as? String else {
-            completion(.failure(MCPError.invalidArguments))
-            return
-        }
-        
-        let fileURL = URL(fileURLWithPath: path)
-        
-        do {
-            let contents = try FileManager.default.contentsOfDirectory(at: fileURL, includingPropertiesForKeys: nil)
-            let files = contents.map { $0.lastPathComponent }
-            let content = files.joined(separator: "\n")
-            
-            completion(.success(MCPToolResult(
-                content: content,
-                success: true,
-                error: nil,
-                metadata: ["path": AnyCodable(path), "count": AnyCodable(files.count)]
-            )))
-        } catch {
-            completion(.failure(error))
-        }
-    }
-}
-
-/// Outil de suppression de fichier
-class FileDeleteTool: MCPToolProtocol {
-    let name = "file_delete"
-    let description = "Supprime un fichier"
-    let parameters: [MCPParameter] = [
-        MCPParameter(name: "path", type: "string", description: "Chemin du fichier", required: true, defaultValue: nil)
-    ]
-    
-    func execute(arguments: [String: Any], completion: @escaping (Result<MCPToolResult, Error>) -> Void) {
-        guard let path = arguments["path"] as? String else {
-            completion(.failure(MCPError.invalidArguments))
-            return
-        }
-        
-        let fileURL = URL(fileURLWithPath: path)
-        
-        do {
-            try FileManager.default.removeItem(at: fileURL)
-            
-            completion(.success(MCPToolResult(
-                content: "Fichier supprimé: \(path)",
-                success: true,
-                error: nil,
-                metadata: ["path": AnyCodable(path)]
-            )))
-        } catch {
-            completion(.failure(error))
-        }
-    }
-}
-
-/// Outil de date/heure
-class DateTimeTool: MCPToolProtocol {
-    let name = "datetime"
-    let description = "Récupère la date et l'heure actuelles"
-    let parameters: [MCPParameter] = [
-        MCPParameter(name: "format", type: "string", description: "Format de date (ex: yyyy-MM-dd HH:mm:ss)", required: false, defaultValue: "yyyy-MM-dd HH:mm:ss")
-    ]
-    
-    func execute(arguments: [String: Any], completion: @escaping (Result<MCPToolResult, Error>) -> Void) {
-        let format = arguments["format"] as? String ?? "yyyy-MM-dd HH:mm:ss"
-        
-        let formatter = DateFormatter()
-        formatter.dateFormat = format
-        let dateString = formatter.string(from: Date())
-        
-        completion(.success(MCPToolResult(
-            content: dateString,
-            success: true,
-            error: nil,
-            metadata: ["format": AnyCodable(format)]
-        )))
-    }
-}
-
-/// Outil de calculatrice
-class CalculatorTool: MCPToolProtocol {
-    let name = "calculator"
-    let description = "Effectue un calcul mathématique"
-    let parameters: [MCPParameter] = [
-        MCPParameter(name: "expression", type: "string", description: "Expression mathématique (ex: 2+2*3)", required: true, defaultValue: nil)
-    ]
-    
-    func execute(arguments: [String: Any], completion: @escaping (Result<MCPToolResult, Error>) -> Void) {
-        guard let expression = arguments["expression"] as? String else {
-            completion(.failure(MCPError.invalidArguments))
-            return
-        }
-        
-        // Utilisation de NSExpression pour évaluer l'expression
-        let mathExpression = NSExpression(format: expression)
-        
-        if let result = mathExpression.expressionValue(with: nil, context: nil) as? NSNumber {
-            completion(.success(MCPToolResult(
-                content: result.stringValue,
-                success: true,
-                error: nil,
-                metadata: ["expression": AnyCodable(expression)]
-            )))
-        } else {
-            completion(.failure(MCPError.executionFailed))
-        }
-    }
-}
-
-/// Outil d'exécution de code
-class CodeExecutionTool: MCPToolProtocol {
-    let name = "code_execute"
-    let description = "Exécute du code Python ou Swift"
-    let parameters: [MCPParameter] = [
-        MCPParameter(name: "language", type: "string", description: "Langage (python ou swift)", required: true, defaultValue: "python"),
-        MCPParameter(name: "code", type: "string", description: "Code à exécuter", required: true, defaultValue: nil)
-    ]
-    
-    func execute(arguments: [String: Any], completion: @escaping (Result<MCPToolResult, Error>) -> Void) {
-        guard let language = arguments["language"] as? String,
-              let code = arguments["code"] as? String else {
-            completion(.failure(MCPError.invalidArguments))
-            return
-        }
-        
-        // Simulation d'exécution de code
-        DispatchQueue.global(qos: .userInitiated).async {
-            Thread.sleep(forTimeInterval: 2.0)
-            
-            let output: String
-            if language.lowercased() == "python" {
-                output = "Résultat de l'exécution Python:\n\(code)\n\nSortie: [Résultat simulé]"
-            } else {
-                output = "Résultat de l'exécution Swift:\n\(code)\n\nSortie: [Résultat simulé]"
-            }
-            
-            DispatchQueue.main.async {
-                completion(.success(MCPToolResult(
-                    content: output,
-                    success: true,
-                    error: nil,
-                    metadata: ["language": AnyCodable(language)]
-                )))
-            }
-        }
-    }
-}
-
-// MARK: - MCP Integration with Chat
-
-/// Extension pour intégrer MCP avec le chat
-extension ChatSession {
-    func executeMCPTool(_ toolName: String, arguments: [String: Any], completion: @escaping (Result<MCPToolResult, Error>) -> Void) {
-        MCPClient.shared.executeTool(toolName, arguments: arguments, completion: completion)
-    }
-    
-    func listAvailableTools() -> [MCPToolProtocol] {
-        MCPClient.shared.listTools()
-    }
-}
-
-/// Gestionnaire de contexte pour MCP
-class MCPContextManager {
-    static let shared = MCPContextManager()
-    
-    private var context: [String: Any] = [:]
-    
-    func setValue(_ value: Any, forKey key: String) {
-        context[key] = value
-    }
-    
-    func getValue(forKey key: String) -> Any? {
-        context[key]
-    }
-    
-    func removeValue(forKey key: String) {
-        context.removeValue(forKey: key)
-    }
-    
-    func clearContext() {
-        context.removeAll()
-    }
-    
-    func getAllContext() -> [String: Any] {
-        context
     }
 }

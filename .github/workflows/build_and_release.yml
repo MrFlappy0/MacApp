@@ -1,4 +1,4 @@
-name: Build and Release DMG
+name: Build and Release MLX for All
 
 on:
   push:
@@ -9,7 +9,7 @@ on:
   workflow_dispatch:
     inputs:
       version:
-        description: 'Version to release (e.g., 1.0.0)'
+        description: 'Version to release (e.g., 2.0.0)'
         required: false
         default: ''
 
@@ -42,26 +42,19 @@ jobs:
           elif [ "${{ github.ref_type }}" = "tag" ]; then
             echo "VERSION=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
           else
-            echo "VERSION=1.0.0" >> $GITHUB_OUTPUT
+            echo "VERSION=2.0.0" >> $GITHUB_OUTPUT
           fi
 
       - name: Build application
         run: |
-          chmod +x build.sh
-          ./build.sh release
-
-      - name: Create DMG
-        run: |
-          chmod +x create_dmg.sh
-          # Update version in create_dmg.sh
-          sed -i '' "s/VERSION=\"1.0.0\"/VERSION=\"${{ steps.version.outputs.VERSION }}\"/g" create_dmg.sh
-          ./create_dmg.sh
+          chmod +x build_dmg.sh
+          ./build_dmg.sh
 
       - name: Rename DMG file
         run: |
-          DMG_PATH="build/dmg/MLXMacApp-${{ steps.version.outputs.VERSION }}.dmg"
-          if [ -f "build/dmg/MLXMacApp.dmg" ]; then
-            mv "build/dmg/MLXMacApp.dmg" "$DMG_PATH"
+          DMG_PATH="build/dmg/MLXForAll-${{ steps.version.outputs.VERSION }}.dmg"
+          if [ -f "build/dmg/MLXForAll.dmg" ]; then
+            mv "build/dmg/MLXForAll.dmg" "$DMG_PATH"
           fi
           # Verify final path
           ls -la build/dmg/
@@ -69,37 +62,48 @@ jobs:
       - name: Upload DMG artifact
         uses: actions/upload-artifact@v4
         with:
-          name: MLXMacApp-${{ steps.version.outputs.VERSION }}.dmg
-          path: build/dmg/MLXMacApp-${{ steps.version.outputs.VERSION }}.dmg
+          name: MLXForAll-${{ steps.version.outputs.VERSION }}.dmg
+          path: build/dmg/MLXForAll-${{ steps.version.outputs.VERSION }}.dmg
           retention-days: 7
 
       - name: Create GitHub Release
         if: github.ref_type == 'tag'
         uses: softprops/action-gh-release@v1
         with:
-          files: build/dmg/MLXMacApp-${{ steps.version.outputs.VERSION }}.dmg
-          name: MLX Mac App v${{ steps.version.outputs.VERSION }}
+          files: build/dmg/MLXForAll-${{ steps.version.outputs.VERSION }}.dmg
+          name: MLX for All v${{ steps.version.outputs.VERSION }}
           body: |
             ## 🎉 Nouvelle Version : v${{ steps.version.outputs.VERSION }}
             
-            ### Changements
-            - [Voir le journal des versions](https://github.com/MrFlappy0/MacApp#%F0%9F%93%85-journal-des-versions)
+            ### 📌 Changements
+            - **MLX for All 2.0.0** : Refonte complète de l'application
+            - Support des derniers modèles 2026 (MLX 2.0, Apple M5, etc.)
+            - Interface centralisée pour tous les paramètres
+            - Gestion complète des modèles, MCP et fichiers
+            - Optimisation pour Apple Silicon
             
-            ### Téléchargement
+            ### 📥 Téléchargement
             - **DMG pour macOS 14.0+ (Apple Silicon recommandé)**
             
-            ### Installation
+            ### 📋 Installation
             1. Téléchargez le fichier `.dmg`
-            2. Ouvrez-le et glissez-déposez `MLX Mac App` dans `/Applications`
+            2. Ouvrez-le et glissez-déposez **MLX for All** dans `/Applications`
             3. Lancez l'application depuis `/Applications`
             
             > ⚠️ Si l'application ne s'ouvre pas, faites un **clic droit > Ouvrir** ou autorisez-la dans **Préférences Système > Sécurité et confidentialité**.
+            
+            ### ✨ Fonctionnalités
+            - **Chat avancé** : Interface similaire à ChatGPT
+            - **Gestion des modèles** : Téléchargement et configuration des LLM
+            - **MCP** : Outils pour recherche web, accès fichiers, calculs
+            - **Paramètres centralisés** : TOUT est configurable dans l'application
+            - **Optimisation** : Accélération Metal, gestion mémoire intelligente
           draft: false
           prerelease: false
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-  # Optional: Notify on success
+  # Notification
   notify:
     name: Notify on Success
     needs: build
