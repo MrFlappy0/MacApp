@@ -1,0 +1,58 @@
+# Xcode
+*.xcodeproj/*
+*.xcworkspace/*
+*.pbxuser
+*.mode1v3
+*.mode2v3
+*.perspectivev3
+*.xcuserstate
+
+# Build products
+*.app
+*.appex
+*.dSYM
+*.dSYM.zip
+*.pdb
+*.suo
+*.swp
+
+# Derived data
+DerivedData/
+build/
+
+# Swift Package Manager
+.Package
+.Package.resolve
+.Package.resolved
+Package.resolved
+
+# Localization
+*.strings
+*.stringsdict
+
+# User data
+*.user
+*.xcuserdatad/
+
+# System files
+.DS_Store
+.Trashes
+
+# IDE
+.idea/
+.vscode/
+*.swiftpm
+
+# Logs
+*.log
+
+# Cache
+*.cache
+Cache/
+
+# Downloads
+Downloads/
+
+# Temporary files
+*.tmp
+*.temp
