@@ -3,7 +3,7 @@
 **Une application macOS ultra-optimisée pour exécuter des modèles MLX (Machine Learning eXploration) avec des performances maximales sur Apple Silicon.**
 
 [![macOS 14.0+](https://img.shields.io/badge/macOS-14.0%2B-blue.svg)](https://developer.apple.com/macos/)
-[![Apple Silicon](https://img.shields.io/badge/Apple_Silicon-M1/M2/M3-green.svg)](https://www.apple.com/m1/)
+[![Apple Silicon](https://img.shields.io/badge/Apple_Silicon-M1/M2/M3/M4/M5-green.svg)](https://www.apple.com/m1/)
 [![Swift 5.9+](https://img.shields.io/badge/Swift-5.9%2B-orange.svg)](https://swift.org/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![MLX Framework](https://img.shields.io/badge/MLX-Framework-purple.svg)](https://github.com/ml-explore/mlx)
