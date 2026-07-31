@@ -17,6 +17,8 @@ struct ContentView: View {
                 PerformanceView()
             case .settings:
                 SettingsView()
+            case .llmRecommender:
+                LLMRecommenderView()
             }
         }
         .frame(minWidth: 1200, minHeight: 800)
@@ -61,6 +63,11 @@ struct SidebarView: View {
                     Label("Performance", systemImage: "chart.bar")
                 }
                 .tag(AppState.Tab.performance)
+                
+                NavigationLink(value: AppState.Tab.llmRecommender) {
+                    Label("LLM Recommender", systemImage: "server.rack")
+                }
+                .tag(AppState.Tab.llmRecommender)
                 
                 NavigationLink(value: AppState.Tab.settings) {
                     Label("Settings", systemImage: "gear")

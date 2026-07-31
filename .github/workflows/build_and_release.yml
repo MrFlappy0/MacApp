@@ -1,0 +1,113 @@
+name: Build and Release DMG
+
+on:
+  push:
+    tags:
+      - 'v*'
+    branches:
+      - main
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to release (e.g., 1.0.0)'
+        required: false
+        default: ''
+
+jobs:
+  build:
+    name: Build and Create DMG
+    runs-on: macos-14
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Xcode
+        uses: actions/setup-xcode@v1
+        with:
+          xcode-version: '15.3'
+
+      - name: Install dependencies
+        run: |
+          # Install create-dmg for better DMG layout
+          brew install create-dmg
+
+      - name: Get version
+        id: version
+        run: |
+          if [ -n "${{ github.event.inputs.version }}" ]; then
+            echo "VERSION=${{ github.event.inputs.version }}" >> $GITHUB_OUTPUT
+          elif [ "${{ github.ref_type }}" = "tag" ]; then
+            echo "VERSION=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
+          else
+            echo "VERSION=1.0.0" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Build application
+        run: |
+          chmod +x build.sh
+          ./build.sh release
+
+      - name: Create DMG
+        run: |
+          chmod +x create_dmg.sh
+          # Update version in create_dmg.sh
+          sed -i '' "s/VERSION=\"1.0.0\"/VERSION=\"${{ steps.version.outputs.VERSION }}\"/g" create_dmg.sh
+          ./create_dmg.sh
+
+      - name: Rename DMG file
+        run: |
+          DMG_PATH="build/dmg/MLXMacApp-${{ steps.version.outputs.VERSION }}.dmg"
+          if [ -f "build/dmg/MLXMacApp.dmg" ]; then
+            mv "build/dmg/MLXMacApp.dmg" "$DMG_PATH"
+          fi
+          # Verify final path
+          ls -la build/dmg/
+
+      - name: Upload DMG artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: MLXMacApp-${{ steps.version.outputs.VERSION }}.dmg
+          path: build/dmg/MLXMacApp-${{ steps.version.outputs.VERSION }}.dmg
+          retention-days: 7
+
+      - name: Create GitHub Release
+        if: github.ref_type == 'tag'
+        uses: softprops/action-gh-release@v1
+        with:
+          files: build/dmg/MLXMacApp-${{ steps.version.outputs.VERSION }}.dmg
+          name: MLX Mac App v${{ steps.version.outputs.VERSION }}
+          body: |
+            ## 🎉 Nouvelle Version : v${{ steps.version.outputs.VERSION }}
+            
+            ### Changements
+            - [Voir le journal des versions](https://github.com/MrFlappy0/MacApp#%F0%9F%93%85-journal-des-versions)
+            
+            ### Téléchargement
+            - **DMG pour macOS 14.0+ (Apple Silicon recommandé)**
+            
+            ### Installation
+            1. Téléchargez le fichier `.dmg`
+            2. Ouvrez-le et glissez-déposez `MLX Mac App` dans `/Applications`
+            3. Lancez l'application depuis `/Applications`
+            
+            > ⚠️ Si l'application ne s'ouvre pas, faites un **clic droit > Ouvrir** ou autorisez-la dans **Préférences Système > Sécurité et confidentialité**.
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  # Optional: Notify on success
+  notify:
+    name: Notify on Success
+    needs: build
+    if: success()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Send notification
+        run: |
+          echo "✅ Build and DMG creation completed successfully!"
+          echo "Version: ${{ steps.version.outputs.VERSION }}"
+          echo "DMG available in artifacts and release (if tagged)"

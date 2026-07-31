@@ -13,7 +13,7 @@ class AppState: ObservableObject {
     @Published var settings = Settings()
     
     enum Tab {
-        case models, inference, performance, settings
+        case models, inference, performance, settings, llmRecommender
     }
     
     struct Settings {
