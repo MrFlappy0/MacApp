@@ -1,58 +1,83 @@
+# =============================================================================
+# MLX for All - .gitignore
+# =============================================================================
+
+# Build artifacts
+build/
+.build/
+DerivedData/
+
 # Xcode
-*.xcodeproj/*
-*.xcworkspace/*
+*.xcodeproj/
+*.xcworkspace/
+*.xcarchive
 *.pbxuser
 *.mode1v3
 *.mode2v3
 *.perspectivev3
 *.xcuserstate
 
-# Build products
-*.app
-*.appex
-*.dSYM
-*.dSYM.zip
-*.pdb
-*.suo
-*.swp
-
-# Derived data
-DerivedData/
-build/
-
 # Swift Package Manager
-.Package
-.Package.resolve
-.Package.resolved
 Package.resolved
+*.swiftmodule
 
-# Localization
-*.strings
-*.stringsdict
+# Application built
+*.app
 
-# User data
-*.user
-*.xcuserdatad/
+# DMG files (keep the latest in releases)
+*.dmg
 
-# System files
-.DS_Store
-.Trashes
-
-# IDE
-.idea/
-.vscode/
-*.swiftpm
+# Temporary files
+temp/
+tmp/
+*.tmp
+*.temp
 
 # Logs
 *.log
 
-# Cache
-*.cache
-Cache/
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
 
-# Downloads
-Downloads/
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
 
-# Temporary files
-*.tmp
-*.temp
+# Environment
+.env
+.env.local
+.env.*.local
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+
+# Node (if used for documentation)
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Resources generated
+Resources/Images/app_icon_*.png
+Resources/AppIcon.icns
+Assets.xcassets/AppIcon.appiconset/
+
+# Artifacts
+artifacts/
+releases/
+
+# OS generated files
+*.pem
+*.key
+
+# Test results
+TestResults/
