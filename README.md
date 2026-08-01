@@ -86,6 +86,17 @@ MLX for All est une **application IA complète** conçue pour **simplifier et op
 
 ## 🛠️ **Installation**
 
+## 🤖 **Build DMG automatisé (GitHub Actions)**
+
+- Workflow : `.github/workflows/build_and_release.yml`
+- Déclenchement automatique : publication d'une GitHub Release (`release.published`)
+- Déclenchement manuel : `workflow_dispatch` (option `release_tag`)
+- Le workflow construit l'app macOS via Xcode, crée un `.dmg`, puis l'upload comme asset de la Release ciblée.
+- Si l'auto-détection échoue, utilisez les overrides :
+  - `xcode_workspace_path`
+  - `xcode_project_path`
+  - `xcode_scheme`
+
 ### 📥 **Méthode 1 : Télécharger le .dmg (Recommandé)**
 
 1. **Télécharger** le dernier `.dmg` depuis les [Releases GitHub](https://github.com/MrFlappy0/MacApp/releases)

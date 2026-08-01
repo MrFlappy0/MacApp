@@ -1,117 +1,75 @@
-name: Build and Release MLX for All
+name: Build macOS DMG and Upload to Release
 
 on:
-  push:
-    tags:
-      - 'v*'
-    branches:
-      - main
+  release:
+    types: [published]
   workflow_dispatch:
     inputs:
-      version:
-        description: 'Version to release (e.g., 2.0.0)'
+      release_tag:
+        description: "Existing release tag to attach DMG to (example: v2.0.0)"
         required: false
-        default: ''
+        type: string
+      xcode_workspace_path:
+        description: "Optional override path to .xcworkspace"
+        required: false
+        type: string
+      xcode_project_path:
+        description: "Optional override path to .xcodeproj"
+        required: false
+        type: string
+      xcode_scheme:
+        description: "Optional override scheme name"
+        required: false
+        type: string
+
+permissions:
+  contents: write
 
 jobs:
-  build:
-    name: Build and Create DMG
+  build-dmg:
     runs-on: macos-14
-    
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
 
-      - name: Set up Xcode
-        uses: actions/setup-xcode@v1
-        with:
-          xcode-version: '15.3'
-
-      - name: Install dependencies
+      - name: Resolve target release tag
+        id: vars
+        shell: bash
         run: |
-          # Install create-dmg for better DMG layout
-          brew install create-dmg
-
-      - name: Get version
-        id: version
-        run: |
-          if [ -n "${{ github.event.inputs.version }}" ]; then
-            echo "VERSION=${{ github.event.inputs.version }}" >> $GITHUB_OUTPUT
-          elif [ "${{ github.ref_type }}" = "tag" ]; then
-            echo "VERSION=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
+          if [[ "${{ github.event_name }}" == "release" ]]; then
+            RELEASE_TAG="${{ github.event.release.tag_name }}"
+          elif [[ -n "${{ inputs.release_tag }}" ]]; then
+            RELEASE_TAG="${{ inputs.release_tag }}"
+          elif [[ "${{ github.ref_type }}" == "tag" ]]; then
+            RELEASE_TAG="${{ github.ref_name }}"
           else
-            echo "VERSION=2.0.0" >> $GITHUB_OUTPUT
+            echo "workflow_dispatch requires inputs.release_tag unless run from a tag ref" >&2
+            exit 1
           fi
 
-      - name: Build application
-        run: |
-          chmod +x build_dmg.sh
-          ./build_dmg.sh
+          echo "release_tag=$RELEASE_TAG" >> "$GITHUB_OUTPUT"
+          echo "RELEASE_TAG=$RELEASE_TAG" >> "$GITHUB_ENV"
 
-      - name: Rename DMG file
+      - name: Build app and create DMG
+        id: dmg
+        shell: bash
+        env:
+          TAG_NAME: ${{ steps.vars.outputs.release_tag }}
+          XCODE_WORKSPACE_PATH: ${{ inputs.xcode_workspace_path }}
+          XCODE_PROJECT_PATH: ${{ inputs.xcode_project_path }}
+          XCODE_SCHEME: ${{ inputs.xcode_scheme }}
         run: |
-          DMG_PATH="build/dmg/MLXForAll-${{ steps.version.outputs.VERSION }}.dmg"
-          if [ -f "build/dmg/MLXForAll.dmg" ]; then
-            mv "build/dmg/MLXForAll.dmg" "$DMG_PATH"
-          fi
-          # Verify final path
-          ls -la build/dmg/
+          ./scripts/build_release_dmg.sh
 
-      - name: Upload DMG artifact
+      - name: Upload workflow artifact
         uses: actions/upload-artifact@v4
         with:
-          name: MLXForAll-${{ steps.version.outputs.VERSION }}.dmg
-          path: build/dmg/MLXForAll-${{ steps.version.outputs.VERSION }}.dmg
-          retention-days: 7
+          name: ${{ steps.dmg.outputs.dmg_name }}
+          path: ${{ steps.dmg.outputs.dmg_path }}
 
-      - name: Create GitHub Release
-        if: github.ref_type == 'tag'
-        uses: softprops/action-gh-release@v1
+      - name: Upload DMG to GitHub Release
+        uses: softprops/action-gh-release@v2
         with:
-          files: build/dmg/MLXForAll-${{ steps.version.outputs.VERSION }}.dmg
-          name: MLX for All v${{ steps.version.outputs.VERSION }}
-          body: |
-            ## 🎉 Nouvelle Version : v${{ steps.version.outputs.VERSION }}
-            
-            ### 📌 Changements
-            - **MLX for All 2.0.0** : Refonte complète de l'application
-            - Support des derniers modèles 2026 (MLX 2.0, Apple M5, etc.)
-            - Interface centralisée pour tous les paramètres
-            - Gestion complète des modèles, MCP et fichiers
-            - Optimisation pour Apple Silicon
-            
-            ### 📥 Téléchargement
-            - **DMG pour macOS 14.0+ (Apple Silicon recommandé)**
-            
-            ### 📋 Installation
-            1. Téléchargez le fichier `.dmg`
-            2. Ouvrez-le et glissez-déposez **MLX for All** dans `/Applications`
-            3. Lancez l'application depuis `/Applications`
-            
-            > ⚠️ Si l'application ne s'ouvre pas, faites un **clic droit > Ouvrir** ou autorisez-la dans **Préférences Système > Sécurité et confidentialité**.
-            
-            ### ✨ Fonctionnalités
-            - **Chat avancé** : Interface similaire à ChatGPT
-            - **Gestion des modèles** : Téléchargement et configuration des LLM
-            - **MCP** : Outils pour recherche web, accès fichiers, calculs
-            - **Paramètres centralisés** : TOUT est configurable dans l'application
-            - **Optimisation** : Accélération Metal, gestion mémoire intelligente
-          draft: false
-          prerelease: false
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-  # Notification
-  notify:
-    name: Notify on Success
-    needs: build
-    if: success()
-    runs-on: ubuntu-latest
-    steps:
-      - name: Send notification
-        run: |
-          echo "✅ Build and DMG creation completed successfully!"
-          echo "Version: ${{ steps.version.outputs.VERSION }}"
-          echo "DMG available in artifacts and release (if tagged)"
+          tag_name: ${{ steps.vars.outputs.release_tag }}
+          files: ${{ steps.dmg.outputs.dmg_path }}
