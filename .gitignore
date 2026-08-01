@@ -1,0 +1,83 @@
+# =============================================================================
+# MLX for All - .gitignore
+# =============================================================================
+
+# Build artifacts
+build/
+.build/
+DerivedData/
+
+# Xcode
+*.xcodeproj/
+*.xcworkspace/
+*.xcarchive
+*.pbxuser
+*.mode1v3
+*.mode2v3
+*.perspectivev3
+*.xcuserstate
+
+# Swift Package Manager
+Package.resolved
+*.swiftmodule
+
+# Application built
+*.app
+
+# DMG files (keep the latest in releases)
+*.dmg
+
+# Temporary files
+temp/
+tmp/
+*.tmp
+*.temp
+
+# Logs
+*.log
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+
+# Node (if used for documentation)
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Resources generated
+Resources/Images/app_icon_*.png
+Resources/AppIcon.icns
+Assets.xcassets/AppIcon.appiconset/
+
+# Artifacts
+artifacts/
+releases/
+
+# OS generated files
+*.pem
+*.key
+
+# Test results
+TestResults/

@@ -1,0 +1,175 @@
+name: Build DMG and Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+    branches:
+      - main
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to release (e.g., 2.0.0)'
+        required: true
+        default: '2.0.0'
+
+jobs:
+  build:
+    name: Build Application and Create DMG
+    runs-on: macos-14
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Xcode
+        uses: actions/setup-xcode@v1
+        with:
+          xcode-version: '15.3'
+
+      - name: Install dependencies
+        run: |
+          # Install create-dmg for professional DMG layout
+          brew install create-dmg
+          
+          # Install Python for icon generation
+          if ! command -v python3 &> /dev/null; then
+            echo "Python not found, but should be pre-installed on macOS"
+          fi
+          pip3 install Pillow
+
+      - name: Get version
+        id: version
+        run: |
+          if [ -n "${{ github.event.inputs.version }}" ]; then
+            echo "VERSION=${{ github.event.inputs.version }}" >> $GITHUB_OUTPUT
+          elif [ "${{ github.ref_type }}" = "tag" ]; then
+            echo "VERSION=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
+          else
+            echo "VERSION=2.0.0" >> $GITHUB_OUTPUT
+          fi
+          echo "Building version: ${{ steps.version.outputs.VERSION }}"
+
+      - name: Create icon
+        run: |
+          cd $GITHUB_WORKSPACE
+          python3 create_icon_simple.py
+
+      - name: Build application
+        run: |
+          cd $GITHUB_WORKSPACE
+          
+          # Make scripts executable
+          chmod +x build_release.sh
+          
+          # Build the application and create DMG
+          ./build_release.sh ${{ steps.version.outputs.VERSION }}
+
+      - name: Verify DMG
+        run: |
+          DMG_PATH="$GITHUB_WORKSPACE/build/dmg/MLXForAll-${{ steps.version.outputs.VERSION }}.dmg"
+          if [ -f "$DMG_PATH" ]; then
+            echo "✅ DMG created successfully"
+            ls -lh "$DMG_PATH"
+            
+            # Verify it's a valid DMG
+            if hdiutil verify "$DMG_PATH" &> /dev/null; then
+              echo "✅ DMG is valid"
+            else
+              echo "⚠️ DMG verification failed"
+            fi
+          else
+            echo "❌ DMG file not found"
+            ls -la build/dmg/
+            exit 1
+          fi
+
+      - name: Create checksum
+        run: |
+          DMG_PATH="$GITHUB_WORKSPACE/build/dmg/MLXForAll-${{ steps.version.outputs.VERSION }}.dmg"
+          if [ -f "$DMG_PATH" ]; then
+            cd $GITHUB_WORKSPACE/build/dmg
+            shasum -a 256 "MLXForAll-${{ steps.version.outputs.VERSION }}.dmg" > "MLXForAll-${{ steps.version.outputs.VERSION }}.dmg.sha256"
+            cat "MLXForAll-${{ steps.version.outputs.VERSION }}.dmg.sha256"
+          fi
+
+      - name: Upload DMG artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: MLXForAll-${{ steps.version.outputs.VERSION }}.dmg
+          path: build/dmg/MLXForAll-${{ steps.version.outputs.VERSION }}.dmg
+          retention-days: 7
+
+      - name: Upload checksum artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: MLXForAll-${{ steps.version.outputs.VERSION }}.dmg.sha256
+          path: build/dmg/MLXForAll-${{ steps.version.outputs.VERSION }}.dmg.sha256
+          retention-days: 7
+
+      - name: Create GitHub Release
+        if: github.ref_type == 'tag' || github.event_name == 'workflow_dispatch'
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: v${{ steps.version.outputs.VERSION }}
+          name: MLX for All v${{ steps.version.outputs.VERSION }}
+          body: |
+            ## 🎉 Nouvelle Version : v${{ steps.version.outputs.VERSION }}
+            
+            **MLX for All** - L'application IA ultime pour macOS, optimisée pour Apple Silicon (M1/M2/M3/M5)
+            
+            ### 📦 Changements
+            - ✅ **Build automatique** : DMG généré automatiquement via GitHub Actions
+            - ✅ **Une seule icône** : Utilisation d'une icône .icns unique
+            - ✅ **Scripts optimisés** : build_release.sh pour une construction unifiée
+            - ✅ **Support MLX 2.0** : Intégration native avec le framework MLX
+            - ✅ **Interface moderne** : Design épuré inspiré de ChatGPT
+            - ✅ **Gestion complète des modèles** : Téléchargement, chargement, configuration
+            - ✅ **Intégration MCP** : Outils pour recherche web, accès fichiers, calculs
+            - ✅ **TOUT centralisé** : Configuration facile dans les paramètres
+            
+            ### 💻 Configuration Requise
+            - **Système** : macOS 14.0+ (Sonoma ou ultérieur)
+            - **Architecture** : Apple Silicon (M1, M2, M3, M5) **recommandé**
+            - **RAM** : 8 Go minimum (16 Go recommandé)
+            - **Stockage** : 10 Go libre (pour les modèles)
+            
+            ### 📥 Installation
+            1. **Télécharger** le fichier `.dmg` ci-dessous
+            2. **Ouvrir** le fichier `.dmg`
+            3. **Glisser-déposer** `MLX for All` dans `/Applications`
+            4. **Lancer** depuis `/Applications`
+            
+            > ⚠️ Si l'application ne s'ouvre pas : **clic droit > Ouvrir** ou autorisez dans **Préférences Système > Sécurité**
+            
+            ### ✨ Fonctionnalités
+            - **Chat avancé** : Interface similaire à ChatGPT
+            - **Gestion des modèles** : Mistral Large 2026, Apple M5 LLM, MLX Hermes 2, Phi-3
+            - **MCP** : Recherche web, accès fichiers, calculs, exécution de code
+            - **Optimisation** : Accélération Metal, gestion mémoire intelligente
+            
+            ### 🔧 Pour les Développeurs
+            Consultez [BUILD.md](https://github.com/MrFlappy0/MacApp/blob/main/BUILD.md)
+            
+            ### 📜 Licence
+            MIT License - Copyright © 2026 MrFlappy0
+          files: |
+            build/dmg/MLXForAll-${{ steps.version.outputs.VERSION }}.dmg
+            build/dmg/MLXForAll-${{ steps.version.outputs.VERSION }}.dmg.sha256
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  notify:
+    name: Notify on Success
+    needs: build
+    if: success()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Send notification
+        run: |
+          echo "✅ Build and DMG creation completed successfully!"
+          echo "Version: ${{ needs.build.outputs.version || steps.version.outputs.VERSION }}"

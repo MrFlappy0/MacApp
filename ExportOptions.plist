@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <!-- Méthode de distribution -->
+    <key>method</key>
+    <string>app-store</string>
+    
+    <!-- Identifiant de l'équipe (à remplacer par votre Team ID Apple Developer) -->
+    <key>teamID</key>
+    <string>YOUR_TEAM_ID</string>
+    
+    <!-- Options de bitcode -->
+    <key>uploadBitcode</key>
+    <false/>
+    <key>compileBitcode</key>
+    <false/>
+    
+    <!-- Symboles de debug -->
+    <key>uploadSymbols</key>
+    <true/>
+    
+    <!-- Thinning (pour les devices spécifiques) -->
+    <key>thinning</key>
+    <string>&lt;none&gt;</string>
+    
+    <!-- Style de signature -->
+    <key>signingStyle</key>
+    <string>manual</string>
+    
+    <!-- Certificat de signature -->
+    <key>signingCertificate</key>
+    <string>Developer ID Application</string>
+    
+    <!-- Identifiant du provisioning profile (optionnel) -->
+    <key>provisioningProfiles</key>
+    <dict>
+        <key>com.mrflappy0.MLXForAll</key>
+        <string>MLXForAll_Profile</string>
+    </dict>
+    
+    <!-- Options supplémentaires pour macOS -->
+    <key>macOS</key>
+    <dict>
+        <!-- Autoriser l'exécution sur tous les Mac (pas seulement App Store) -->
+        <key>hardenedRuntime</key>
+        <true/>
+        
+        <!-- Autorisations -->
+        <key>entitlements</key>
+        <dict>
+            <key>com.apple.security.app-sandbox</key>
+            <false/>
+            <key>com.apple.security.network.client</key>
+            <true/>
+            <key>com.apple.security.network.server</key>
+            <true/>
+            <key>com.apple.security.files.user-selected.read-only</key>
+            <true/>
+            <key>com.apple.security.files.user-selected.read-write</key>
+            <true/>
+        </dict>
+    </dict>
+</dict>
+</plist>

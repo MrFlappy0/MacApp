@@ -1,0 +1,58 @@
+{
+  "project": {
+    "name": "MLXForAll",
+    "displayName": "MLX for All",
+    "bundleId": "com.mrflappy0.MLXForAll",
+    "version": "2.0.0",
+    "buildNumber": "2026.1"
+  },
+  "build": {
+    "configuration": "Release",
+    "architecture": "arm64",
+    "platform": "macOS",
+    "minimumOSVersion": "14.0",
+    "swiftVersion": "5.10",
+    "optimizationLevel": "-O",
+    "crossModuleOptimization": true,
+    "staticSwiftStdlib": true
+  },
+  "dmg": {
+    "volumeName": "MLXForAll",
+    "windowPosition": [200, 120],
+    "windowSize": [600, 400],
+    "iconSize": 100,
+    "appIconPosition": [150, 190],
+    "applicationsLinkPosition": [450, 190],
+    "useCreateDmg": true,
+    "backgroundImage": "Resources/DMGBackground.png",
+    "volumeIcon": "Resources/AppIcon.icns"
+  },
+  "signing": {
+    "enabled": false,
+    "teamId": "YOUR_TEAM_ID",
+    "signingCertificate": "Developer ID Application",
+    "provisioningProfile": "MLXForAll_Profile",
+    "hardenedRuntime": true,
+    "entitlements": {
+      "appSandbox": false,
+      "networkClient": true,
+      "networkServer": true,
+      "fileRead": true,
+      "fileWrite": true
+    }
+  },
+  "dependencies": {
+    "mlx": "2.0.0",
+    "swift-numerics": "1.0.0",
+    "swift-argument-parser": "1.2.0",
+    "vapor": "4.85.0",
+    "swift-collections": "1.1.0",
+    "swift-system": "1.2.1"
+  },
+  "github": {
+    "repository": "MrFlappy0/MacApp",
+    "workflow": "build_and_release.yml",
+    "artifactRetentionDays": 7,
+    "autoRelease": true
+  }
+}
