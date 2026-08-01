@@ -10,16 +10,21 @@ DerivedData/
 # Xcode
 *.xcodeproj/
 *.xcworkspace/
+!*.xcodeproj/project.pbxproj
+!*.xcworkspace/contents.xcworkspacedata
 *.xcarchive
 *.pbxuser
 *.mode1v3
 *.mode2v3
 *.perspectivev3
 *.xcuserstate
+xcuserdata/
+*.xcresult
 
 # Swift Package Manager
 Package.resolved
 *.swiftmodule
+.swiftpm/
 
 # Application built
 *.app
@@ -66,10 +71,8 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 
-# Resources generated
-Resources/Images/app_icon_*.png
-Resources/AppIcon.icns
-Assets.xcassets/AppIcon.appiconset/
+# Generated resources (build-time only)
+build/**/*.icns
 
 # Artifacts
 artifacts/

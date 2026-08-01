@@ -311,7 +311,7 @@ struct FileDetailView: View {
             Text("Contenu")
                 .font(.headline)
             
-            Text(fileContent!)
+            Text(fileContent ?? "")
                 .font(.body)
                 .textSelection(.enabled)
                 .padding(12)
@@ -352,17 +352,22 @@ struct FileDetailView: View {
                     
                     // Limiter la taille pour l'affichage
                     let maxLength = 10000
+                    let contentToDisplay: String
                     if content.count > maxLength {
-                        fileContent = String(content.prefix(maxLength)) + "\n\n... (fichier tronqué)"
+                        contentToDisplay = String(content.prefix(maxLength)) + "\n\n... (fichier tronqué)"
                     } else {
-                        fileContent = content
+                        contentToDisplay = content
+                    }
+                    
+                    DispatchQueue.main.async {
+                        fileContent = contentToDisplay
+                        isLoading = false
                     }
                 } else {
-                    fileContent = "Ce type de fichier ne peut pas être affiché directement."
-                }
-                
-                DispatchQueue.main.async {
-                    isLoading = false
+                    DispatchQueue.main.async {
+                        fileContent = "Ce type de fichier ne peut pas être affiché directement."
+                        isLoading = false
+                    }
                 }
             } catch {
                 DispatchQueue.main.async {

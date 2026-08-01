@@ -88,14 +88,10 @@ MLX for All est une **application IA complète** conçue pour **simplifier et op
 
 ## 🤖 **Build DMG automatisé (GitHub Actions)**
 
-- Workflow : `.github/workflows/build_and_release.yml`
-- Déclenchement automatique : publication d'une GitHub Release (`release.published`)
-- Déclenchement manuel : `workflow_dispatch` (option `release_tag`)
-- Le workflow construit l'app macOS via Xcode, crée un `.dmg`, puis l'upload comme asset de la Release ciblée.
-- Si l'auto-détection échoue, utilisez les overrides :
-  - `xcode_workspace_path`
-  - `xcode_project_path`
-  - `xcode_scheme`
+- Workflow : `.github/workflows/build_dmg.yml`
+- Déclenchement automatique : push d'un tag SemVer (ex: `1.0.1`)
+- Déclenchement manuel : `workflow_dispatch` (input `version`, défaut `1.0.1`)
+- Le workflow construit l'app macOS **non signée**, crée `MLX for all.dmg`, puis publie le DMG dans la release GitHub du tag.
 
 ### 📥 **Méthode 1 : Télécharger le .dmg (Recommandé)**
 
@@ -125,9 +121,9 @@ MLX for All est une **application IA complète** conçue pour **simplifier et op
 
 2. **Compiler l'application** :
    ```bash
-   # Méthode 1 : Utiliser le script de build
-   chmod +x build_dmg.sh
-   ./build_dmg.sh
+   # Méthode 1 : Utiliser le script de build/release
+   chmod +x build_release.sh
+   ./build_release.sh 1.0.1
    
    # Méthode 2 : Utiliser Swift Package Manager
    swift build -c release --arch arm64
@@ -318,10 +314,10 @@ MLXForAll/
 ├── Assets.xcassets/
 │   └── AppIcon.appiconset/             # Icônes pour toutes les tailles
 ├── Package.swift                       # Dépendances
-├── build_dmg.sh                        # Script de création du .dmg
+├── build_release.sh                    # Script de création du .dmg
 └── .github/
     └── workflows/
-        └── build_and_release.yml         # Workflow CI/CD
+        └── build_dmg.yml                 # Workflow CI/CD
 ```
 
 ### **Technologies Utilisées**
@@ -389,6 +385,7 @@ Pour toute question, suggestion ou rapport de bug :
 
 | Version | Date | Changements |
 |---------|------|-------------|
+| **1.0.1** | 2026 | Release non signée, pipeline GitHub Actions stabilisé, asset `MLX for all.dmg` |
 | **2.0.0** | 2026 | Refonte complète : MLX for All, support 2026, MCP, interface centralisée |
 | **1.0.0** | 2024 | Version initiale : Support de base pour MLX |
 

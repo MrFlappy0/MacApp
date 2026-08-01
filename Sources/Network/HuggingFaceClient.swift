@@ -31,7 +31,7 @@ class HuggingFaceClient {
         var request = URLRequest(url: urlComponents.url!)
         request.httpMethod = "GET"
         
-        if let token = accessToken {
+        if let token = accessToken, !token.isEmpty {
             request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
         }
         
@@ -65,7 +65,7 @@ class HuggingFaceClient {
         var request = URLRequest(url: url)
         request.httpMethod = "GET"
         
-        if let token = accessToken {
+        if let token = accessToken, !token.isEmpty {
             request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
         }
         
@@ -98,7 +98,7 @@ class HuggingFaceClient {
         
         var request = URLRequest(url: url)
         
-        if let token = accessToken {
+        if let token = accessToken, !token.isEmpty {
             request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
         }
         
@@ -115,6 +115,9 @@ class HuggingFaceClient {
             
             do {
                 // Copier le fichier temporaire vers la destination
+                if FileManager.default.fileExists(atPath: destinationURL.path) {
+                    try FileManager.default.removeItem(at: destinationURL)
+                }
                 try FileManager.default.copyItem(at: tempURL, to: destinationURL)
                 completion(.success(destinationURL))
             } catch {
@@ -145,7 +148,7 @@ class HuggingFaceClient {
         var request = URLRequest(url: url)
         request.httpMethod = "GET"
         
-        if let token = accessToken {
+        if let token = accessToken, !token.isEmpty {
             request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
         }
         
