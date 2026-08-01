@@ -5,7 +5,7 @@
 # =============================================================================
 # Script principal pour créer un release complet avec DMG
 # Usage: ./make_release.sh [version] [message]
-# Exemple: ./make_release.sh 2.0.0 "Initial release"
+# Exemple: ./make_release.sh 1.0.1 "Release 1.0.1"
 # =============================================================================
 
 set -e
@@ -40,12 +40,16 @@ print_info() {
     print_status "$BLUE" "ℹ️ $1"
 }
 
+print_warning() {
+    print_status "$YELLOW" "⚠️ $1"
+}
+
 print_header() {
     print_status "$PURPLE" "=== $1 ==="
 }
 
 # Récupérer la version
-VERSION="${1:-2.0.0}"
+VERSION="${1:-1.0.1}"
 RELEASE_MESSAGE="${2:-Automatic release}"
 
 print_header "Début du processus de release"
@@ -89,7 +93,12 @@ echo ""
 
 # Étape 4: Vérifier que le DMG existe
 print_header "Étape 4: Vérification"
-DMG_PATH="$PROJECT_DIR/build/dmg/MLXForAll-$VERSION.dmg"
+DMG_PATH="$PROJECT_DIR/build/dmg/MLX for all.dmg"
+
+SOURCE_DMG_PATH="$PROJECT_DIR/build/dmg/MLXForAll-$VERSION.dmg"
+if [ -f "$SOURCE_DMG_PATH" ]; then
+    cp "$SOURCE_DMG_PATH" "$DMG_PATH"
+fi
 
 if [ ! -f "$DMG_PATH" ]; then
     print_error "Le fichier DMG n'a pas été créé: $DMG_PATH"
@@ -119,14 +128,14 @@ else
     # Vérifier que nous sommes dans un dépôt git
     if [ -d ".git" ]; then
         # Créer le tag
-        git tag -a "v$VERSION" -m "Release v$VERSION: $RELEASE_MESSAGE"
-        print_success "Tag créé: v$VERSION"
+        git tag -a "$VERSION" -m "Release $VERSION: $RELEASE_MESSAGE"
+        print_success "Tag créé: $VERSION"
         
         # Pousser le tag
-        if git push origin "v$VERSION" 2>/dev/null; then
+        if git push origin "$VERSION" 2>/dev/null; then
             print_success "Tag poussé vers origin"
         else
-            print_warning "Impossible de pousser le tag. Faites-le manuellement: git push origin v$VERSION"
+            print_warning "Impossible de pousser le tag. Faites-le manuellement: git push origin $VERSION"
         fi
     else
         print_warning "Pas dans un dépôt git. Le tag ne sera pas créé."
@@ -138,8 +147,8 @@ echo ""
 print_header "Étape 6: Release GitHub"
 print_info "Pour créer un release GitHub:"
 print_info "1. Allez sur: https://github.com/MrFlappy0/MacApp/releases/new"
-print_info "2. Sélectionnez le tag: v$VERSION"
-print_info "3. Titre: MLX for All v$VERSION"
+print_info "2. Sélectionnez le tag: $VERSION"
+print_info "3. Titre: MLX for All $VERSION"
 print_info "4. Joignez le fichier: $DMG_PATH"
 print_info "5. Description: Utilisez le template du workflow"
 echo ""
@@ -148,14 +157,14 @@ echo ""
 print_header "Résumé"
 print_success "✅ Version: $VERSION"
 print_success "✅ DMG: $DMG_PATH"
-print_success "✅ Tag: v$VERSION"
+print_success "✅ Tag: $VERSION"
 print_success "✅ Message: $RELEASE_MESSAGE"
 echo ""
 
 print_header "Fichiers générés"
 print_info "- Application: $PROJECT_DIR/build/Release/MLXForAll.app"
 print_info "- DMG: $DMG_PATH"
-print_info "- Checksum: $PROJECT_DIR/build/dmg/MLXForAll-$VERSION.dmg.sha256"
+print_info "- Checksum: $PROJECT_DIR/build/dmg/MLX for all.dmg.sha256"
 echo ""
 
 print_success "✅ Processus de release terminé avec succès!"

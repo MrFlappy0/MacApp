@@ -553,8 +553,9 @@ extension AppSettings: Codable {
         currentModelConfig = try container.decodeIfPresent(ModelConfig.self, forKey: .currentModelConfig) ?? ModelConfig()
         
         // Initialiser les autres propriétés
-        fileStoragePath = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first!
-            .appendingPathComponent("MLXForAll", isDirectory: true)
+        let baseDirectory = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first
+            ?? FileManager.default.homeDirectoryForCurrentUser
+        fileStoragePath = baseDirectory.appendingPathComponent("MLXForAll", isDirectory: true)
         
         load2026Models()
         loadMCPTools()

@@ -44,10 +44,10 @@ python3 create_icon_simple.py
 
 ### 4. Construire l'application et créer le DMG
 ```bash
-./build_release.sh 2.0.0
+./build_release.sh 1.0.1
 ```
 
-Le DMG sera généré dans `build/dmg/MLXForAll-2.0.0.dmg`
+Le DMG sera généré dans `build/dmg/MLX for all.dmg`
 
 ---
 
@@ -63,7 +63,7 @@ Script principal pour construire l'application et créer le DMG.
 
 **Exemple:**
 ```bash
-./build_release.sh 2.0.0
+./build_release.sh 1.0.1
 ```
 
 **Ce que fait le script:**
@@ -86,7 +86,7 @@ Script complet pour créer un release avec tag Git.
 
 **Exemple:**
 ```bash
-./make_release.sh 2.0.0 "Initial release with MLX 2.0 support"
+./make_release.sh 1.0.1 "Initial release with MLX 2.0 support"
 ```
 
 **Ce que fait le script:**
@@ -136,24 +136,24 @@ iconutil -c icns -o Resources/AppIcon.icns Resources/AppIcon.iconset
 ### Build locale
 ```bash
 # Construire en mode Release
-./build_release.sh 2.0.0
+./build_release.sh 1.0.1
 
 # Le DMG sera dans build/dmg/
 ls -lh build/dmg/
 ```
 
 ### Build avec GitHub Actions
-Le workflow `.github/workflows/build_and_release.yml` est configuré pour :
+Le workflow `.github/workflows/build_dmg.yml` est configuré pour :
 
-1. **Sur push vers main** : Construire et créer le DMG
+1. **Sur push de tag SemVer (ex: 1.0.1)** : Construire et créer le DMG
 2. **Sur création de tag** : Construire, créer le DMG et publier un release
 3. **Workflow manuel** : Peut être déclenché via l'interface GitHub
 
 **Pour déclencher manuellement :**
 1. Allez sur GitHub > Actions
-2. Sélectionnez le workflow "Build and Release MLX for All"
+2. Sélectionnez le workflow "Build DMG and Release"
 3. Cliquez sur "Run workflow"
-4. Entrez la version (ex: 2.0.0)
+4. Entrez la version (ex: 1.0.1)
 
 ---
 
@@ -161,27 +161,27 @@ Le workflow `.github/workflows/build_and_release.yml` est configuré pour :
 
 ### Méthode 1: Utiliser make_release.sh
 ```bash
-./make_release.sh 2.0.0 "Nouvelle version avec support MLX 2.0"
+./make_release.sh 1.0.1 "Nouvelle version avec support MLX 2.0"
 ```
 
 ### Méthode 2: Manuellement
 
 1. **Créer le DMG**
 ```bash
-./build_release.sh 2.0.0
+./build_release.sh 1.0.1
 ```
 
 2. **Créer un tag Git**
 ```bash
-git tag -a v2.0.0 -m "Release v2.0.0: Nouvelle version avec support MLX 2.0"
-git push origin v2.0.0
+git tag -a 1.0.1 -m "Release 1.0.1: Nouvelle version avec support MLX 2.0"
+git push origin 1.0.1
 ```
 
 3. **Créer le release sur GitHub**
    - Allez sur: https://github.com/MrFlappy0/MacApp/releases/new
-   - Sélectionnez le tag `v2.0.0`
-   - Titre: `MLX for All v2.0.0`
-   - Joignez le fichier: `build/dmg/MLXForAll-2.0.0.dmg`
+   - Sélectionnez le tag `1.0.1`
+   - Titre: `MLX for All 1.0.1`
+   - Joignez le fichier: `build/dmg/MLX for all.dmg`
    - Description: Utilisez le template du workflow
 
 ---
@@ -191,13 +191,13 @@ git push origin v2.0.0
 ### Vérifier le DMG
 ```bash
 # Vérifier que le DMG est valide
-hdiutil verify build/dmg/MLXForAll-2.0.0.dmg
+hdiutil verify build/dmg/MLX for all.dmg
 
 # Vérifier la taille
-du -sh build/dmg/MLXForAll-2.0.0.dmg
+du -sh build/dmg/MLX for all.dmg
 
 # Monter le DMG pour tester
-hdiutil attach build/dmg/MLXForAll-2.0.0.dmg
+hdiutil attach build/dmg/MLX for all.dmg
 open /Volumes/MLXForAll/
 ```
 
@@ -288,7 +288,7 @@ MLXForAll/
 │   └── build_config.json               # Configuration de build
 ├── .github/
 │   └── workflows/
-│       └── build_and_release.yml       # Workflow CI/CD
+│       └── build_dmg.yml       # Workflow CI/CD
 ├── Package.swift                       # Dépendances
 ├── ExportOptions.plist                 # Options d'export
 ├── build_release.sh                    # Script de build principal
@@ -309,10 +309,10 @@ Votre application MLX for All est prête à être construite et distribuée !
 **Résumé des commandes importantes :**
 ```bash
 # Build rapide
-./build_release.sh 2.0.0
+./build_release.sh 1.0.1
 
 # Release complet
-./make_release.sh 2.0.0 "Message de release"
+./make_release.sh 1.0.1 "Message de release"
 
 # Nettoyage
 ./cleanup_images.sh
@@ -320,8 +320,8 @@ Votre application MLX for All est prête à être construite et distribuée !
 
 **Fichiers générés :**
 - `build/Release/MLXForAll.app` - L'application
-- `build/dmg/MLXForAll-2.0.0.dmg` - Le disque image
-- `build/dmg/MLXForAll-2.0.0.dmg.sha256` - Checksum SHA256
+- `build/dmg/MLX for all.dmg` - Le disque image
+- `build/dmg/MLX for all.dmg.sha256` - Checksum SHA256
 
 ---
 

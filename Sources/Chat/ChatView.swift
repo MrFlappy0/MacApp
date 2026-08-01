@@ -237,25 +237,24 @@ struct ChatView: View {
             Thread.sleep(forTimeInterval: 0.5)
             
             let responseText = generateResponse(for: chat)
+            let tokens = responseText.map { String($0) }
+            var fullResponse = ""
             
             DispatchQueue.main.async {
                 chat.addAssistantMessage("", isStreaming: true)
-                
-                let tokens = responseText.map { String($0) }
-                var fullResponse = ""
-                
-                for token in tokens {
-                    Thread.sleep(forTimeInterval: 0.02)
-                    fullResponse += token
-                    DispatchQueue.main.async {
-                        chat.updateStreamingMessage(fullResponse)
-                    }
-                }
-                
+            }
+            
+            for token in tokens {
+                Thread.sleep(forTimeInterval: 0.02)
+                fullResponse += token
                 DispatchQueue.main.async {
-                    chat.endStreaming()
-                    self.isSending = false
+                    chat.updateStreamingMessage(fullResponse)
                 }
+            }
+            
+            DispatchQueue.main.async {
+                chat.endStreaming()
+                self.isSending = false
             }
         }
     }

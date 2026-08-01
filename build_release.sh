@@ -11,7 +11,7 @@
 # 5. Préparer pour le release GitHub
 # =============================================================================
 
-set -e
+set -euo pipefail
 
 # --- Configuration ---
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -21,7 +21,7 @@ APP_NAME="MLX for All"
 BUNDLE_ID="com.mrflappy0.MLXForAll"
 
 # Version - peut être écrasée par argument ou variable d'environnement
-VERSION="${1:-${MLX_VERSION:-2.0.0}}"
+VERSION="${1:-${MLX_VERSION:-1.0.1}}"
 
 # Chemins
 BUILD_DIR="$PROJECT_DIR/build"
@@ -29,7 +29,6 @@ RELEASE_DIR="$BUILD_DIR/Release"
 APP_PATH="$RELEASE_DIR/$PROJECT_NAME.app"
 DMG_DIR="$BUILD_DIR/dmg"
 DMG_PATH="$DMG_DIR/$PROJECT_NAME-$VERSION.dmg"
-TEMP_DMG="$DMG_DIR/temp.dmg"
 
 # Ressources
 ICON_PATH="$PROJECT_DIR/Resources/AppIcon.icns"
@@ -269,7 +268,7 @@ create_dmg() {
         if [ ! -f "$BACKGROUND_IMAGE" ]; then
             # Créer un fond simple
             mkdir -p "$PROJECT_DIR/Resources"
-            python3 << 'EOF'
+            python3 <<EOF
 from PIL import Image, ImageDraw
 
 # Créer une image 600x400
@@ -334,11 +333,11 @@ verify_dmg() {
         else
             # Calcul manuel
             if [ $DMG_SIZE -ge 1073741824 ]; then
-                SIZE_HUMAN=$(echo "scale=2; $DMG_SIZE / 1073741824" | bc)G"
+                SIZE_HUMAN="$(echo "scale=2; $DMG_SIZE / 1073741824" | bc)G"
             elif [ $DMG_SIZE -ge 1048576 ]; then
-                SIZE_HUMAN=$(echo "scale=2; $DMG_SIZE / 1048576" | bc)M"
+                SIZE_HUMAN="$(echo "scale=2; $DMG_SIZE / 1048576" | bc)M"
             elif [ $DMG_SIZE -ge 1024 ]; then
-                SIZE_HUMAN=$(echo "scale=2; $DMG_SIZE / 1024" | bc)K"
+                SIZE_HUMAN="$(echo "scale=2; $DMG_SIZE / 1024" | bc)K"
             else
                 SIZE_HUMAN="${DMG_SIZE}B"
             fi
